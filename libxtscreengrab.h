@@ -2,6 +2,7 @@
 
 #include <Cocoa/Cocoa.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <stdio.h>
 /* #include <AppKit/AppKit.h> */
 
 void swizzleBitmap(void *data, int rowBytes, int height);   

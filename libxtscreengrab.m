@@ -16,9 +16,9 @@ void swizzleBitmap(void *data, int rowBytes, int height) {
         topP = (void *)((top * rowBytes) + (intptr_t)base);
         bottomP = (void *)((bottom * rowBytes) + (intptr_t)base);
 
-        bcopy( topP, buffer, rowBytes );
-        bcopy( bottomP, topP, rowBytes );
-        bcopy( buffer, bottomP, rowBytes );
+        memcpy( topP, buffer, rowBytes );
+        memcpy( bottomP, topP, rowBytes );
+        memcpy( buffer, bottomP, rowBytes );
 
         ++top;
         --bottom;
@@ -43,14 +43,18 @@ CVImageBufferRef grabViaOpenGL() {
                                           frameSize.height,  kCVPixelFormatType_32ARGB, (CFDictionaryRef) options,
                                           &pxbuffer);
 
-
+    
+    if(status!=kCVReturnSuccess){
+      printf("Problem creating pixel buffer, error code: %d", status);
+    }
+    
     CVPixelBufferLockBaseAddress(pxbuffer, 0);
     void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
 
     CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(pxdata, frameSize.width,
                                                  frameSize.height, 8, 4*frameSize.width, rgbColorSpace,
-                                                 kCGImageAlphaNoneSkipLast);
+                                                 (CGBitmapInfo)kCGImageAlphaNoneSkipLast);
 
     CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image),
                                            CGImageGetHeight(image)), image);
