@@ -10,3 +10,4 @@ CGFloat sg_screenWidth();
 CGFloat sg_screenHeight();
 size_t sg_bitsPerPixel();
 int64_t sg_grabScreen(void* buf, int64_t buflen);
+void sg_printScreenImageInfo();

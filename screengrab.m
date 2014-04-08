@@ -80,3 +80,49 @@ int64_t sg_grabScreen(void* buf, int64_t buflen) {
   
   return length;
 }
+
+// a utility function for printing all the details about the
+// screengrab image
+void sg_printScreenImageInfo(){
+  CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);
+
+  size_t width  = CGImageGetWidth(image);
+  size_t height = CGImageGetHeight(image);
+  size_t bpr = CGImageGetBytesPerRow(image);
+  size_t bpp = CGImageGetBitsPerPixel(image);
+  size_t bpc = CGImageGetBitsPerComponent(image);
+  
+  CGBitmapInfo info = CGImageGetBitmapInfo(image);
+
+  printf("          CGImageGetHeight: %d\n"
+         "           CGImageGetWidth: %d\n"
+         "     GImageGetBitsPerPixel: %d\n"
+         "CGImageGetBitsPerComponent: %d\n"
+         "     CGImageGetBytesPerRow: %d\n"
+         "      CGImageGetBitmapInfo: 0x%.8X\n"
+         "    kCGBitmapAlphaInfoMask: %s\n"
+         "  kCGBitmapFloatComponents: %s\n"
+         "    kCGBitmapByteOrderMask: 0x%.8X\n"
+         " kCGBitmapByteOrderDefault: %s\n"
+         "kCGBitmapByteOrder16Little: %s\n"
+         "kCGBitmapByteOrder32Little: %s\n"
+         "   kCGBitmapByteOrder16Big: %s\n"
+         "   kCGBitmapByteOrder32Big: %s\n",
+         (int)width,
+         (int)height,
+         (int)bpp,
+         (int)bpc,
+         (int)bpr,
+         (unsigned)info,
+         (info & kCGBitmapAlphaInfoMask)     ? "YES" : "NO",
+         (info & kCGBitmapFloatComponents)   ? "YES" : "NO",
+         (info & kCGBitmapByteOrderMask),
+         ((info & kCGBitmapByteOrderMask) == kCGBitmapByteOrderDefault)  ? "YES" : "NO",
+         ((info & kCGBitmapByteOrderMask) == kCGBitmapByteOrder16Little) ? "YES" : "NO",
+         ((info & kCGBitmapByteOrderMask) == kCGBitmapByteOrder32Little) ? "YES" : "NO",
+         ((info & kCGBitmapByteOrderMask) == kCGBitmapByteOrder16Big)    ? "YES" : "NO",
+         ((info & kCGBitmapByteOrderMask) == kCGBitmapByteOrder32Big)    ? "YES" : "NO");
+
+  // CFRelease(info);
+  CGImageRelease(image);
+}
