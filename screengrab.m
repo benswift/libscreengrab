@@ -1,6 +1,6 @@
 #include "screengrab.h"
 
-void swizzleBitmap(void *data, int rowBytes, int height) {
+void sg_swizzleBitmap(void *data, int rowBytes, int height) {
     int top, bottom;
     void * buffer;
     void * topP;
@@ -26,48 +26,57 @@ void swizzleBitmap(void *data, int rowBytes, int height) {
     free(buffer);
 }   
 
-CVImageBufferRef grabViaOpenGL() {
-    int bytewidth;
-
-    CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);    // Main screenshot capture call
-
-    CGSize frameSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));    // Get screenshot bounds
-
-    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
-                            [NSNumber numberWithBool:NO], kCVPixelBufferCGImageCompatibilityKey,
-                            [NSNumber numberWithBool:NO], kCVPixelBufferCGBitmapContextCompatibilityKey,
-                            nil];
-
-    CVPixelBufferRef pxbuffer = NULL;
-    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, frameSize.width,
-                                          frameSize.height,  kCVPixelFormatType_32ARGB, (CFDictionaryRef) options,
-                                          &pxbuffer);
-
-    
-    if(status!=kCVReturnSuccess){
-      printf("Problem creating pixel buffer, error code: %d", status);
-    }
-    
-    CVPixelBufferLockBaseAddress(pxbuffer, 0);
-    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
-
-    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(pxdata, frameSize.width,
-                                                 frameSize.height, 8, 4*frameSize.width, rgbColorSpace,
-                                                 (CGBitmapInfo)kCGImageAlphaNoneSkipLast);
-
-    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image),
-                                           CGImageGetHeight(image)), image);
-
-    bytewidth = frameSize.width * 4; // Assume 4 bytes/pixel for now
-    bytewidth = (bytewidth + 3) & ~3; // Align to 4 bytes
-    swizzleBitmap(pxdata, bytewidth, frameSize.height);     // Solution for ARGB madness
-
-    CGColorSpaceRelease(rgbColorSpace);
+CGFloat sg_screenWidth() {
+  CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);
+  if(image){
+    CGFloat width = CGImageGetWidth(image);
     CGImageRelease(image);
-    CGContextRelease(context);
+    return width;  
+  }else{
+    CGImageRelease(image);
+    printf("Error, display is NULL.\n");
+    return 0.0;
+  }
+}
 
-    CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
+CGFloat sg_screenHeight() {
+  CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);
+  if(image){
+    CGFloat height = CGImageGetHeight(image);
+    CGImageRelease(image);
+    return height;  
+  }else{
+    CGImageRelease(image);
+    printf("Error, display is NULL.\n");
+    return 0.0;
+  }
+}
 
-    return pxbuffer;
+size_t sg_bitsPerPixel() {
+  CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);
+  if(image){
+    size_t bpp = CGImageGetBitsPerPixel(image);
+    CGImageRelease(image);
+    return bpp;  
+  }else{
+    CGImageRelease(image);
+    printf("Error, display is NULL.\n");
+    return 0;
+  }
+}
+
+int64_t sg_grabScreen(void* buf, int64_t buflen) {
+  // Main screenshot capture call
+  CGImageRef image = CGDisplayCreateImage(kCGDirectMainDisplay);
+  CFDataRef rawData = CGDataProviderCopyData(CGImageGetDataProvider(image));
+  CGImageRelease(image);
+  int64_t length = CFDataGetLength(rawData);
+
+  if(length > buflen){
+    printf("Warning: data (%lld bytes) is too big for supplied buffer (%lld bytes)\n", length, buflen);
+  }
+  // copy the data into a buffer that we own
+  CFDataGetBytes(rawData, CFRangeMake(0,CFDataGetLength(rawData)), buf);
+  
+  return length;
 }
