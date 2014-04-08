@@ -1,4 +1,4 @@
-#include "libxtscreengrab.h"
+#include "screengrab.h"
 
 void swizzleBitmap(void *data, int rowBytes, int height) {
     int top, bottom;
